@@ -1,6 +1,5 @@
 #import "ZNMemoryEngine.h"
 #import <mach/mach.h>
-#import <mach/mach_vm.h>
 #import <mach-o/dyld.h>
 
 static NSString *ZNTrim(NSString *s) {
@@ -113,9 +112,9 @@ static NSString *ZNKR(kern_return_t kr) {
     return @(address);
 }
 
-- (BOOL)readBytesAtAddress:(mach_vm_address_t)address buffer:(void *)buffer length:(mach_vm_size_t)length error:(NSString **)error {
-    mach_vm_size_t outSize = 0;
-    kern_return_t kr = mach_vm_read_overwrite(mach_task_self(), address, length, (mach_vm_address_t)(uintptr_t)buffer, &outSize);
+- (BOOL)readBytesAtAddress:(vm_address_t)address buffer:(void *)buffer length:(vm_size_t)length error:(NSString **)error {
+    vm_size_t outSize = 0;
+    kern_return_t kr = vm_read_overwrite(mach_task_self(), address, length, (vm_address_t)(uintptr_t)buffer, &outSize);
     if (kr != KERN_SUCCESS || outSize != length) {
         if (error) *error = [NSString stringWithFormat:@"读取失败：%@", ZNKR(kr)];
         return NO;
@@ -123,46 +122,10 @@ static NSString *ZNKR(kern_return_t kr) {
     return YES;
 }
 
-- (BOOL)writeBytes:(const void *)bytes length:(mach_msg_type_number_t)length address:(mach_vm_address_t)address error:(NSString **)error {
-    task_t task = mach_task_self();
-    kern_return_t kr = mach_vm_write(task, address, (vm_offset_t)(uintptr_t)bytes, length);
-    if (kr == KERN_SUCCESS) return YES;
-
-    mach_vm_address_t regionAddress = address;
-    mach_vm_size_t regionSize = 0;
-    vm_region_basic_info_data_64_t info = {};
-    mach_msg_type_number_t infoCount = VM_REGION_BASIC_INFO_COUNT_64;
-    mach_port_t objectName = MACH_PORT_NULL;
-    kern_return_t regionKR = mach_vm_region(task,
-                                            &regionAddress,
-                                            &regionSize,
-                                            VM_REGION_BASIC_INFO_64,
-                                            (vm_region_info_t)&info,
-                                            &infoCount,
-                                            &objectName);
-    if (objectName != MACH_PORT_NULL) mach_port_deallocate(mach_task_self(), objectName);
-    if (regionKR != KERN_SUCCESS || address < regionAddress || address + length > regionAddress + regionSize) {
-        if (error) *error = [NSString stringWithFormat:@"写入失败：%@", ZNKR(kr)];
-        return NO;
-    }
-
-    vm_size_t pageSize = 0;
-    host_page_size(mach_host_self(), &pageSize);
-    if (pageSize == 0) pageSize = 0x4000;
-    mach_vm_address_t pageStart = address & ~((mach_vm_address_t)pageSize - 1);
-    mach_vm_address_t end = address + length;
-    mach_vm_address_t pageEnd = (end + pageSize - 1) & ~((mach_vm_address_t)pageSize - 1);
-    vm_prot_t temporary = info.protection | VM_PROT_READ | VM_PROT_WRITE | VM_PROT_COPY;
-    kern_return_t protectKR = mach_vm_protect(task, pageStart, pageEnd - pageStart, FALSE, temporary);
-    if (protectKR != KERN_SUCCESS) {
-        if (error) *error = [NSString stringWithFormat:@"页面不可写：%@", ZNKR(protectKR)];
-        return NO;
-    }
-
-    kr = mach_vm_write(task, address, (vm_offset_t)(uintptr_t)bytes, length);
-    mach_vm_protect(task, pageStart, pageEnd - pageStart, FALSE, info.protection);
+- (BOOL)writeBytes:(const void *)bytes length:(mach_msg_type_number_t)length address:(vm_address_t)address error:(NSString **)error {
+    kern_return_t kr = vm_write(mach_task_self(), address, (vm_offset_t)(uintptr_t)bytes, length);
     if (kr != KERN_SUCCESS) {
-        if (error) *error = [NSString stringWithFormat:@"写入失败：%@", ZNKR(kr)];
+        if (error) *error = [NSString stringWithFormat:@"写入失败：%@。当前页可能不可写。", ZNKR(kr)];
         return NO;
     }
     return YES;
@@ -194,7 +157,7 @@ static NSString *ZNKR(kern_return_t kr) {
 - (NSString *)readValueAtExpression:(NSString *)expression type:(ZNMemoryValueType)type error:(NSString **)error {
     NSNumber *resolved = [self resolveAddressExpression:expression error:error];
     if (!resolved) return nil;
-    mach_vm_address_t address = (mach_vm_address_t)resolved.unsignedLongLongValue;
+    vm_address_t address = (vm_address_t)resolved.unsignedLongLongValue;
 
     switch (type) {
         case ZNMemoryValueTypeInt32: {
@@ -230,7 +193,7 @@ static NSString *ZNKR(kern_return_t kr) {
 - (BOOL)writeValue:(NSString *)value atExpression:(NSString *)expression type:(ZNMemoryValueType)type error:(NSString **)error {
     NSNumber *resolved = [self resolveAddressExpression:expression error:error];
     if (!resolved) return NO;
-    mach_vm_address_t address = (mach_vm_address_t)resolved.unsignedLongLongValue;
+    vm_address_t address = (vm_address_t)resolved.unsignedLongLongValue;
     NSString *text = ZNTrim(value ?: @"");
     if (text.length == 0) {
         if (error) *error = @"值为空";
