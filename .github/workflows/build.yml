@@ -1,28 +1,161 @@
-name: build-ios-dylib
+name: build-zonopatch-v0563-cyberpunk-ui
 
 on:
   push:
     branches:
       - main
       - "feature/**"
-  pull_request:
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: macos-15
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
-      - name: Build arm64 iOS dylib
+      - name: Checkout Cyberpunk UI repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Checkout v0.5.6.2 SEALED runtime baseline
+        uses: actions/checkout@v4
+        with:
+          repository: a7987083/UnitXP_SP3-Moonstone
+          ref: 86edac4d70ef467e9a58912768b6c6c72077842a
+          path: vendor/unitxp
+          fetch-depth: 1
+
+      - name: Verify pinned sealed baseline
         run: |
-          chmod +x Scripts/build-ios.sh
-          Scripts/build-ios.sh
-      - name: Inspect Mach-O
+          set -euxo pipefail
+          test "$(git -C vendor/unitxp rev-parse HEAD)" = "86edac4d70ef467e9a58912768b6c6c72077842a"
+          test -f vendor/unitxp/iosruntimepatchmenu/docs/releases/v0.5.6.2.md
+          grep -q 'SEALED / ACCEPTED' vendor/unitxp/iosruntimepatchmenu/docs/releases/v0.5.6.2.md
+
+      - name: Install Cyberpunk UI skin only
         run: |
-          file build/DylibCaidan.dylib
-          otool -hv build/DylibCaidan.dylib
-          otool -L build/DylibCaidan.dylib
-      - name: Upload dylib
+          set -euxo pipefail
+          cp Sources/ZNCyberpunkRuntimeSkin.mm vendor/unitxp/iosruntimepatchmenu/src/ZNCyberpunkRuntimeSkin.mm
+          python3 Scripts/prepare-v0563-ui.py vendor/unitxp/iosruntimepatchmenu
+
+          status="$(git -C vendor/unitxp status --short -- iosruntimepatchmenu)"
+          printf '%s\n' "$status"
+          printf '%s\n' "$status" | grep 'iosruntimepatchmenu/Makefile'
+          printf '%s\n' "$status" | grep 'iosruntimepatchmenu/src/ZNDeferredBootstrap.mm'
+          printf '%s\n' "$status" | grep 'iosruntimepatchmenu/src/ZNCyberpunkRuntimeSkin.mm'
+          unexpected="$(printf '%s\n' "$status" | grep '^ M\|^M \|^??' | grep 'iosruntimepatchmenu/' | grep -v -E 'iosruntimepatchmenu/(Makefile|src/ZNDeferredBootstrap.mm|src/ZNCyberpunkRuntimeSkin.mm)$' || true)"
+          test -z "$unexpected"
+
+      - name: Preserve sealed runtime invariants
+        run: |
+          set -euxo pipefail
+          src=vendor/unitxp/iosruntimepatchmenu/src
+          makefile=vendor/unitxp/iosruntimepatchmenu/Makefile
+          grep -q '#define ZNActivationTraceLog(...) do { if (0)' "$src/ZNActivationTrace.h"
+          test ! -e "$src/ZNActivationTrace.mm"
+          ! grep -R -q 'ZonoPatch-v0.5.6.2.log' "$src"
+          grep -q 'gZNModuleRegistrationReplay' "$src/ZNPatchCore.mm"
+          grep -q 'imageNotificationScheduled' "$src/ZNPatchCore.mm"
+          grep -q 'zn44_scheduleRefreshAfter' "$src/ZNStaticDispatchRuntime.mm"
+          grep -q 'ZN44_STATIC_HEADER_FLAG_PAYLOAD_PROTECTION_V2' "$src/ZNStaticPatchFormat.h"
+          grep -q 'ZNStaticPayloadProtectionV2.h' "$src/ZNStaticBinaryBuilderV3.mm"
+          grep -q 'payload-v2+static-rva-protection-v1' "$src/ZNGeneratedBinaryPostprocess.mm"
+          grep -q 'ZNCyberpunkRuntimeSkin.mm' "$makefile"
+          grep -q 'ZNCyberpunkUIInstallDeferred' "$src/ZNDeferredBootstrap.mm"
+
+          compiled="$(sed -n 's/^ZonoePatchV03_FILES = //p' "$makefile")"
+          ctor_hits=""
+          load_hits=""
+          for f in $compiled; do
+            if grep -n '__attribute__((constructor' "vendor/unitxp/iosruntimepatchmenu/$f" >/tmp/zn_ctor_hits 2>/dev/null; then
+              ctor_hits="$ctor_hits\nvendor/unitxp/iosruntimepatchmenu/$f:$(cat /tmp/zn_ctor_hits)"
+            fi
+            if grep -nE '^[[:space:]]*\+[[:space:]]*\(void\)load[[:space:]]*\{' "vendor/unitxp/iosruntimepatchmenu/$f" >/tmp/zn_load_hits 2>/dev/null; then
+              load_hits="$load_hits\nvendor/unitxp/iosruntimepatchmenu/$f:$(cat /tmp/zn_load_hits)"
+            fi
+          done
+          test "$(printf '%b\n' "$ctor_hits" | sed '/^$/d' | wc -l | tr -d ' ')" = "1"
+          printf '%b\n' "$ctor_hits" | grep 'ZNDeferredBootstrap.mm'
+          printf '%b\n' "$ctor_hits" | grep 'ZNDeferredColdLauncherBootstrap'
+          test -z "$(printf '%b' "$load_hits")"
+
+      - name: Protection and metadata tests
+        run: |
+          set -euxo pipefail
+          root=vendor/unitxp/iosruntimepatchmenu
+          clang++ -std=c++17 -I"$root/src" "$root/tests/static_payload_protection_v2_test.mm" -o /tmp/zn_payload_test
+          /tmp/zn_payload_test
+          clang++ -std=c++17 -fobjc-arc -framework Foundation -I"$root/src" "$root/tests/feature_metadata_codec_test.mm" "$root/src/ZNFeatureMetadataCodec.mm" -o /tmp/zn_metadata_test
+          /tmp/zn_metadata_test
+          clang++ -std=c++17 -fobjc-arc -framework Foundation -I"$root/src" "$root/tests/static_rva_protection_test.mm" -o /tmp/zn_rva_test
+          /tmp/zn_rva_test
+
+      - name: Install dependencies
+        run: |
+          brew update
+          brew install ldid
+
+      - name: Install Theos
+        run: |
+          git clone --recursive https://github.com/theos/theos.git $HOME/theos
+          echo "THEOS=$HOME/theos" >> $GITHUB_ENV
+
+      - name: Build v0.5.6.2 sealed core with Cyberpunk UI
+        run: |
+          set -euxo pipefail
+          cd vendor/unitxp/iosruntimepatchmenu
+          make clean
+          make FINALPACKAGE=1
+          mkdir -p dist-v0563-cyber-ui
+          cp .theos/obj/ZonoePatchV03.dylib dist-v0563-cyber-ui/ZonoPatch_v0.5.6.3_CyberpunkUI.dylib
+          shasum -a 256 dist-v0563-cyber-ui/ZonoPatch_v0.5.6.3_CyberpunkUI.dylib | tee dist-v0563-cyber-ui/SHA256.txt
+
+      - name: Verify binary and UI-only integration
+        run: |
+          set -euxo pipefail
+          out=vendor/unitxp/iosruntimepatchmenu/dist-v0563-cyber-ui/ZonoPatch_v0.5.6.3_CyberpunkUI.dylib
+          file "$out"
+          nm -gU "$out" | grep '_ZonoePatchGetAPIVersion'
+          nm -gU "$out" | grep '_ZonoePatchGetVersion'
+          nm -gU "$out" | grep '_ZonoePatchDeveloperAuthorized'
+          nm -gU "$out" | grep '_ZonoePatchOtherAuthorized'
+          strings "$out" > /tmp/zncy_strings.txt
+          grep -q 'v0.5.6.2 SEALED CORE' /tmp/zncy_strings.txt
+          grep -q 'P L A Y   B E Y O N D   L I M I T S' /tmp/zncy_strings.txt
+          grep -q 'payload-v2+static-rva-protection-v1' /tmp/zncy_strings.txt
+          ! grep -q 'ZonoPatch-v0.5.6.2.log' /tmp/zncy_strings.txt
+
+          python3 <<'PY'
+          import struct
+          p='vendor/unitxp/iosruntimepatchmenu/dist-v0563-cyber-ui/ZonoPatch_v0.5.6.3_CyberpunkUI.dylib'
+          data=open(p,'rb').read()
+          if struct.unpack_from('<I',data,0)[0] != 0xfeedfacf:
+              raise SystemExit('not thin arm64 Mach-O')
+          ncmds=struct.unpack_from('<I',data,16)[0]
+          off=32
+          init_size=None
+          for _ in range(ncmds):
+              cmd,cmdsize=struct.unpack_from('<II',data,off)
+              if cmd==0x19:
+                  nsects=struct.unpack_from('<I',data,off+64)[0]
+                  so=off+72
+                  for __ in range(nsects):
+                      sectname=data[so:so+16].split(b'\0',1)[0]
+                      if sectname==b'__init_offsets':
+                          init_size=struct.unpack_from('<Q',data,so+40)[0]
+                      so+=80
+              off+=cmdsize
+          print('init_offsets_size=',init_size)
+          if init_size != 4:
+              raise SystemExit(f'expected exactly one sealed cold-launch constructor, got {init_size}')
+          PY
+
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: DylibCaidan-arm64
-          path: build/DylibCaidan.dylib
+          name: ZonoPatch-v0.5.6.3-CyberpunkUI
+          path: |
+            vendor/unitxp/iosruntimepatchmenu/dist-v0563-cyber-ui/ZonoPatch_v0.5.6.3_CyberpunkUI.dylib
+            vendor/unitxp/iosruntimepatchmenu/dist-v0563-cyber-ui/SHA256.txt
+          if-no-files-found: error
