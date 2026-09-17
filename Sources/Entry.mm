@@ -1,6 +1,8 @@
 #import <UIKit/UIKit.h>
 #import "ZNOverlay.h"
 #import "ZNCompactLayoutFix.h"
+#import "ZNUIStabilityV032.h"
+#import "ZNRuntimeSafetyV032.h"
 
 @interface ZNBootstrap : NSObject
 + (void)install;
@@ -8,7 +10,12 @@
 
 @implementation ZNBootstrap
 + (void)install {
+    // Install order matters: the v0.3.2 UI layer chains after compact layout
+    // so its final header/picker/content corrections run last.
     ZNInstallCompactLayoutFix();
+    ZNInstallUIStabilityV032();
+    ZNInstallRuntimeSafetyV032();
+
     NSNotificationCenter *center = NSNotificationCenter.defaultCenter;
     [center addObserverForName:UIApplicationDidFinishLaunchingNotification object:nil queue:NSOperationQueue.mainQueue usingBlock:^(__unused NSNotification *note) {
         [[ZNOverlayManager shared] start];
