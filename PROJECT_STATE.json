@@ -1,27 +1,32 @@
 {
-  "version": "0.1.0",
+  "version": "0.2.0",
   "repository": "a7987083/dylibcaidan",
-  "branch": "feature/cyberpunk-floating-menu-v1",
-  "baseline": "32a6ded03025df2887fdb474d65d38c8f027c735",
-  "head": "db3332e65031744c6d18bbfdc1b527d5a08f96f9",
+  "branch": "feature/cyberpunk-pixelmatch-v2",
+  "baseline": "818bce37dd8a84980f4d831f3c5cce11b13fde1b",
+  "code_commit": "1f2ef8055f422fffa891ace2e86eabde506cb846",
   "build": {
     "system": ["xcrun clang++", "Theos"],
     "target": "iOS arm64",
     "minimum_ios": "13.0",
-    "local_verified": false,
     "ci_compiled": true,
-    "macho": "Mach-O 64-bit dynamically linked shared library arm64",
-    "artifact_sha256": "61a8331f97c3e7914cbea7025edda9aff3bbe4ff9e966b318e08ef694a7fa6ce"
+    "macho_verified": true,
+    "macho": "Mach-O 64-bit arm64 dynamically linked shared library",
+    "artifact_name": "DylibCaidan-arm64",
+    "artifact_id": 10513230174,
+    "artifact_sha256": "a4ab2874696082b8ed5779c3d17b04e9585f17dc2b4c8432530ed24fcb0534b8"
   },
   "ci": {
     "workflow": ".github/workflows/build.yml",
-    "run_id": 35195545064,
+    "run_id": 35255740382,
     "status": "success"
   },
   "runtime": {
     "device_verified": false,
-    "injection_verified": false
+    "injection_verified": false,
+    "visual_pixelmatch_verified": false,
+    "touch_passthrough_verified": false,
+    "rotation_verified": false
   },
-  "phase": "floating-ui-shell-compiled",
-  "next_task": "runtime-test the compiled dylib in an authorized target and verify touch, scene, rotation and suspend/resume behavior"
+  "phase": "v2-built-awaiting-device-validation",
+  "next_task": "inject V2 dylib into the authorized test app, capture a fresh landscape screenshot, compare against the concept, then make measured visual adjustments"
 }

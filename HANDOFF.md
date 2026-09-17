@@ -4,37 +4,57 @@
 `a7987083/dylibcaidan`
 
 ## Active implementation branch
-`feature/cyberpunk-floating-menu-v1`
+`feature/cyberpunk-pixelmatch-v2`
 
-## Current verified head
-`db3332e65031744c6d18bbfdc1b527d5a08f96f9`
+## Stable baseline
+V1/docs baseline: `818bce37dd8a84980f4d831f3c5cce11b13fde1b`
+
+## V2 code baseline
+`1f2ef8055f422fffa891ace2e86eabde506cb846`
+
+This is the code commit whose GitHub Actions run `35255740382` built and inspected successfully. Later commits on the branch may be documentation-only.
 
 ## Architecture
-`Entry.mm` installs launch/active observers and starts `ZNOverlayManager`.
+`Entry.mm` starts `ZNOverlayManager` after launch/activation.
 
-`ZNOverlayManager` creates a separate high-level `ZNOverlayWindow`. On iOS 13+ it attaches to a foreground `UIWindowScene`; older iOS falls back to `initWithFrame:`.
+`ZNOverlay.mm` owns the high-level overlay `UIWindow`, foreground `UIWindowScene` selection, transparent hit-test pass-through and draggable floating button. The overlay implementation keeps the rewritten H5GG-inspired architecture and does not use H5GG's repeating keep-front timer.
 
-`ZNOverlayWindow` returns `nil` from `hitTest:` when the hit target is only the transparent root view, allowing host-app touches to continue outside the floating button/menu.
+V2 UI is modular:
+- `ZNUIComponents.h/.mm`: glow panels, custom neon switch, control rows, slider rows, preset cells.
+- `ZNEmbeddedAssets.h/.mm`: self-contained base64 JPEG atlas and runtime crop lookup for 12 concept-derived preset thumbnails.
+- `ZNMenuViewControllerV2.mm`: menu state, notifications, slider values, gallery data source/layout sizing.
+- `ZNMenuLayout.mm`: complete V2 hierarchy and Auto Layout geometry.
+- `ZNMenuPrivate.h`: shared private declarations across the V2 implementation units.
 
-`ZNOverlayRootController` owns `ZNMenuViewController` and `ZNFloatingButton`.
+`Makefile` and `Scripts/build-ios.sh` compile the V2 modules; the old `ZNMenuViewController.mm` remains in the repository only as the V1 reference and is not in the V2 compile list.
 
-`ZNFloatingButton` uses a pan gesture for dragging and a control event for opening/closing the menu. It intentionally does not use H5GG's repeating keep-front timer.
+UI interaction integration remains generic: controls emit `ZNMenuValueChangedNotification` with `key` and `value`.
 
-`ZNMenuViewController` is presentation-only. UI interactions emit `ZNMenuValueChangedNotification` with `key` and `value`. No host-specific feature implementation is wired yet.
+## V2 visual changes from real-device feedback
+- Replaced system `UISwitch` with `ZNNeonSwitch`.
+- Replaced gradient placeholder presets with embedded concept-derived thumbnails.
+- Added stronger cyan/purple glow, layered borders and dark glass gradients.
+- Added SF Symbol iconography to sections, control rows and tabs.
+- Added numeric slider values (`1.0x`, `75°`) and live updates.
+- Split left-side content into GLOBAL TWEAKS and PLAYER CONTROL cards.
+- Rebuilt top branding/master toggle and four separate bottom neon buttons.
+- Increased menu sizing toward the concept proportions while keeping safe-area bounds.
 
 ## Build verification
-GitHub Actions run `35195545064`: success.
+GitHub Actions run `35255740382`: success.
 
 Artifact:
-- `DylibCaidan.dylib`
-- Mach-O 64-bit arm64 dynamic library
-- install name: `@rpath/DylibCaidan.dylib`
-- SHA-256: `61a8331f97c3e7914cbea7025edda9aff3bbe4ff9e966b318e08ef694a7fa6ce`
+- name: `DylibCaidan-arm64`
+- artifact id: `10513230174`
+- extracted type: Mach-O 64-bit arm64 dynamically linked shared library
+- dylib SHA-256: `a4ab2874696082b8ed5779c3d17b04e9585f17dc2b4c8432530ed24fcb0534b8`
 
-## Reference baseline
-H5GG public repository: `FloatWindow.h`, `FloatButton.h`, `makeWindow.h`. The current implementation is a rewrite, not a direct copy.
+## Next task
+Inject the V2 artifact into the authorized test target and capture a new landscape screenshot. Compare it directly against the supplied concept before any additional visual tuning. Do not infer V2 pixel-match quality from CI; CI proves compilation/Mach-O validity only.
 
 ## Remaining risks
-- Not yet runtime-tested in a real authorized injected target.
-- Some host apps may alter window levels/scenes after launch.
-- Landscape/Stage Manager/multi-scene behavior still needs device regression testing.
+- No physical-device V2 runtime test yet.
+- Exact visual/pixel match is not yet measured.
+- Embedded atlas cells are intentionally compressed and may need higher-resolution assets if the device render exposes blur.
+- SF Symbol availability can differ by iOS version; missing symbols should degrade by omitting the image rather than crashing.
+- Host apps can still change window levels/scenes after startup; this remains a runtime regression item.

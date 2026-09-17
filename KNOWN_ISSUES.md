@@ -1,24 +1,38 @@
 # KNOWN_ISSUES
 
-## KI-001 — Real-device injection not yet verified
+## KI-001 — V2 real-device injection/runtime not yet verified
 Status: open
 
-The dylib source and build configuration exist, but no authorized physical-device runtime test has been performed yet.
-
-Validation needed:
-- startup before/after scene creation
+CI verifies compilation and Mach-O structure only. Required runtime checks:
+- launch before/after scene creation
 - background/foreground
 - touch pass-through
-- floating button dragging
-- menu rotation/resize
+- floating-button drag
+- menu open/close
+- rotation/resize
 - multiple scenes / iPad Stage Manager
 
-## KI-002 — Placeholder preset thumbnails
+## KI-002 — Exact concept pixel match is not yet device-verified
+Status: open
+
+V2 was rebuilt from the supplied concept/real-device comparison, but no fresh V2 device screenshot has been measured yet. Do not claim pixel-match completion until a new screenshot is captured and compared.
+
+## KI-003 — Embedded thumbnail atlas is compressed
+Status: open / low risk
+
+The 12 gallery thumbnails are embedded as a compact 4x3 JPEG atlas and cropped at runtime. This removes the V1 gradient placeholders and keeps the dylib self-contained, but the compressed 64x39 source cells can look soft when rendered larger. If this is visible on-device, replace the atlas with a higher-resolution embedded set.
+
+## KI-004 — SF Symbol availability depends on iOS version
+Status: open / compatibility
+
+The UI uses system symbols for gear, shield, lock, camera, search, sliders, eye, walking figure and bottom tabs. `ZNSymbol` returns nil when a symbol is unavailable, so the UI should omit that icon instead of failing, but visual consistency must be checked on the minimum target OS.
+
+## KI-005 — Host feature callbacks remain generic
 Status: expected
 
-The preset grid uses generated gradient cards instead of bundled image assets. This keeps the dylib self-contained. Replace with project-owned assets later if the exact concept-art thumbnails are required.
+Controls currently emit `ZNMenuValueChangedNotification`. Application-specific feature behavior must be connected separately.
 
-## KI-003 — Host feature callbacks are intentionally generic
-Status: expected
+## KI-006 — Host window/scene behavior still requires regression
+Status: open
 
-Controls currently post `ZNMenuValueChangedNotification`. Real application feature handlers must be connected separately.
+Some host apps may change window level, scene state or orientation after launch. The overlay architecture is unchanged from V1 and needs target-app runtime validation.
