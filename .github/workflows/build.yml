@@ -1,4 +1,4 @@
-name: build-neon-ios-modifier-v3
+name: build-neon-ios-modifier-v3.1
 
 on:
   push:
@@ -11,39 +11,42 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Verify 20 Chinese layout definitions
+      - name: Verify 20 Chinese layout definitions and compact engine
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          s = Path('Sources/ZNMenuViewController.mm').read_text()
+          menu = Path('Sources/ZNMenuViewController.mm').read_text()
+          compact = Path('Sources/ZNCompactLayoutFix.mm').read_text()
           names = [
               '经典三栏','顶栏工作台','底部停靠','右侧工具栏','镜像三栏',
               '左栏双层','卡片矩阵','编辑器优先','检查器优先','中央核心',
               '宽屏控制台','终端主视图','双栏均分','上下堆叠','左右堆叠',
               '浮动卡片','HUD 十字','工控台','极简面板','赛博仪表盘'
           ]
-          missing = [x for x in names if x not in s]
+          missing = [x for x in names if x not in menu]
           assert not missing, f'missing layouts: {missing}'
-          assert 'ZNNeonModifierLayoutIndex' in s
-          assert 'switch (self.selectedLayoutIndex)' in s
-          print('20-layout source verification: PASS')
+          assert 'ZNNeonModifierLayoutIndex' in menu
+          assert 'ZN_COMPACT_LAYOUT_V4_20_DISTINCT_PORTRAIT' in compact
+          assert compact.count('case ') >= 19, 'compact layouts are not individually implemented'
+          print('20-layout compact source verification: PASS')
           PY
       - name: Build arm64 iOS modifier dylib
         run: |
           chmod +x Scripts/build-ios.sh
           Scripts/build-ios.sh
-      - name: Verify Mach-O and runtime markers
+      - name: Verify Mach-O and compact runtime marker
         run: |
           file build/NeonModifier.dylib
           otool -hv build/NeonModifier.dylib
           otool -L build/NeonModifier.dylib
           strings build/NeonModifier.dylib | grep -q "UnityFramework+0x1A2B3C"
           strings build/NeonModifier.dylib | grep -q "ZNNeonModifierLayoutIndex"
+          strings build/NeonModifier.dylib | grep -q "ZN_COMPACT_LAYOUT_V4_20_DISTINCT_PORTRAIT"
           cat build/SHA256.txt
       - name: Upload dylib
         uses: actions/upload-artifact@v4
         with:
-          name: NeonModifier-v0.3.0-Chinese20Layouts-arm64
+          name: NeonModifier-v0.3.1-Real20Layouts-arm64
           path: |
             build/NeonModifier.dylib
             build/SHA256.txt
