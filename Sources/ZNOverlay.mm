@@ -19,33 +19,37 @@
     self = [super initWithFrame:frame];
     if (!self) return nil;
     self.layer.cornerRadius = frame.size.width * 0.5;
-    self.layer.shadowColor = UIColor.cyanColor.CGColor;
-    self.layer.shadowOpacity = 0.55;
-    self.layer.shadowRadius = 12.0;
+    self.layer.shadowColor = [UIColor colorWithRed:0.0 green:0.90 blue:1.0 alpha:1.0].CGColor;
+    self.layer.shadowOpacity = 0.62;
+    self.layer.shadowRadius = 13.0;
     self.layer.shadowOffset = CGSizeZero;
 
     _gradientLayer = [CAGradientLayer layer];
-    _gradientLayer.colors = @[(id)[UIColor colorWithRed:0.02 green:0.72 blue:1 alpha:1].CGColor,
-                              (id)[UIColor colorWithRed:0.68 green:0.12 blue:1 alpha:1].CGColor];
-    _gradientLayer.startPoint = CGPointMake(0,0);
-    _gradientLayer.endPoint = CGPointMake(1,1);
+    _gradientLayer.colors = @[(id)[UIColor colorWithRed:0.0 green:0.91 blue:1.0 alpha:1.0].CGColor,
+                              (id)[UIColor colorWithRed:0.95 green:0.08 blue:0.96 alpha:1.0].CGColor];
+    _gradientLayer.startPoint = CGPointMake(0, 0);
+    _gradientLayer.endPoint = CGPointMake(1, 1);
     [self.layer addSublayer:_gradientLayer];
 
     UIView *inner = [[UIView alloc] initWithFrame:CGRectZero];
     inner.translatesAutoresizingMaskIntoConstraints = NO;
     inner.userInteractionEnabled = NO;
-    inner.backgroundColor = [UIColor colorWithRed:0.015 green:0.035 blue:0.08 alpha:0.92];
+    inner.backgroundColor = [UIColor colorWithRed:0.01 green:0.025 blue:0.065 alpha:0.95];
     inner.layer.cornerRadius = MAX(0, frame.size.width * 0.5 - 3);
-    inner.layer.borderWidth = 1;
-    inner.layer.borderColor = [UIColor colorWithWhite:1 alpha:0.18].CGColor;
+    inner.layer.borderWidth = 1.0;
+    inner.layer.borderColor = [UIColor colorWithWhite:1 alpha:0.16].CGColor;
     [self addSubview:inner];
 
     UILabel *glyph = [[UILabel alloc] initWithFrame:CGRectZero];
     glyph.translatesAutoresizingMaskIntoConstraints = NO;
-    glyph.text = @"X";
+    glyph.text = @"N";
     glyph.textAlignment = NSTextAlignmentCenter;
     glyph.textColor = UIColor.whiteColor;
-    glyph.font = [UIFont systemFontOfSize:22 weight:UIFontWeightBlack];
+    glyph.font = [UIFont italicSystemFontOfSize:22.0];
+    glyph.layer.shadowColor = UIColor.cyanColor.CGColor;
+    glyph.layer.shadowOpacity = 0.8;
+    glyph.layer.shadowRadius = 5.0;
+    glyph.layer.shadowOffset = CGSizeZero;
     [inner addSubview:glyph];
 
     [NSLayoutConstraint activateConstraints:@[
@@ -63,23 +67,29 @@
     [self addGestureRecognizer:pan];
     return self;
 }
+
 - (void)layoutSubviews {
     [super layoutSubviews];
     self.gradientLayer.frame = self.bounds;
     self.gradientLayer.cornerRadius = self.bounds.size.width * 0.5;
 }
-- (void)handleTap { if (self.tapHandler) self.tapHandler(); }
+
+- (void)handleTap {
+    if (self.tapHandler) self.tapHandler();
+}
+
 - (void)handlePan:(UIPanGestureRecognizer *)pan {
     UIView *container = self.superview;
     if (!container) return;
     if (pan.state == UIGestureRecognizerStateBegan) self.panOrigin = self.center;
-    CGPoint t = [pan translationInView:container];
-    CGPoint c = CGPointMake(self.panOrigin.x + t.x, self.panOrigin.y + t.y);
+    CGPoint translation = [pan translationInView:container];
+    CGPoint center = CGPointMake(self.panOrigin.x + translation.x, self.panOrigin.y + translation.y);
     UIEdgeInsets safe = container.safeAreaInsets;
-    CGFloat hw = CGRectGetWidth(self.bounds)/2.0, hh = CGRectGetHeight(self.bounds)/2.0;
-    c.x = MIN(MAX(c.x, safe.left + hw + 6), CGRectGetWidth(container.bounds) - safe.right - hw - 6);
-    c.y = MIN(MAX(c.y, safe.top + hh + 6), CGRectGetHeight(container.bounds) - safe.bottom - hh - 6);
-    self.center = c;
+    CGFloat halfWidth = CGRectGetWidth(self.bounds) * 0.5;
+    CGFloat halfHeight = CGRectGetHeight(self.bounds) * 0.5;
+    center.x = MIN(MAX(center.x, safe.left + halfWidth + 6), CGRectGetWidth(container.bounds) - safe.right - halfWidth - 6);
+    center.y = MIN(MAX(center.y, safe.top + halfHeight + 6), CGRectGetHeight(container.bounds) - safe.bottom - halfHeight - 6);
+    self.center = center;
 }
 @end
 
@@ -99,7 +109,7 @@
     [self.view addSubview:self.menuController.view];
     [self.menuController didMoveToParentViewController:self];
 
-    self.floatingButton = [[ZNFloatingButton alloc] initWithFrame:CGRectMake(18, 96, 54, 54)];
+    self.floatingButton = [[ZNFloatingButton alloc] initWithFrame:CGRectMake(18, 96, 56, 56)];
     [self.view addSubview:self.floatingButton];
     __weak ZNOverlayRootController *weakSelf = self;
     self.floatingButton.tapHandler = ^{
@@ -107,15 +117,17 @@
         [weakSelf.view bringSubviewToFront:weakSelf.floatingButton];
     };
 }
+
 - (void)viewDidLayoutSubviews {
     [super viewDidLayoutSubviews];
     UIEdgeInsets safe = self.view.safeAreaInsets;
-    CGRect f = self.floatingButton.frame;
-    f.origin.x = MIN(MAX(f.origin.x, safe.left + 6), CGRectGetWidth(self.view.bounds) - safe.right - CGRectGetWidth(f) - 6);
-    f.origin.y = MIN(MAX(f.origin.y, safe.top + 6), CGRectGetHeight(self.view.bounds) - safe.bottom - CGRectGetHeight(f) - 6);
-    self.floatingButton.frame = f;
+    CGRect frame = self.floatingButton.frame;
+    frame.origin.x = MIN(MAX(frame.origin.x, safe.left + 6), CGRectGetWidth(self.view.bounds) - safe.right - CGRectGetWidth(frame) - 6);
+    frame.origin.y = MIN(MAX(frame.origin.y, safe.top + 6), CGRectGetHeight(self.view.bounds) - safe.bottom - CGRectGetHeight(frame) - 6);
+    self.floatingButton.frame = frame;
     [self.view bringSubviewToFront:self.floatingButton];
 }
+
 - (BOOL)shouldAutorotate { return YES; }
 - (UIInterfaceOrientationMask)supportedInterfaceOrientations { return UIInterfaceOrientationMaskAll; }
 @end
@@ -132,16 +144,18 @@
     dispatch_once(&onceToken, ^{ manager = [[ZNOverlayManager alloc] init]; });
     return manager;
 }
+
 - (UIWindowScene *)foregroundWindowScene API_AVAILABLE(ios(13.0)) {
     UIWindowScene *fallback = nil;
     for (UIScene *scene in UIApplication.sharedApplication.connectedScenes) {
         if (![scene isKindOfClass:UIWindowScene.class]) continue;
-        UIWindowScene *ws = (UIWindowScene *)scene;
-        if (!fallback) fallback = ws;
-        if (ws.activationState == UISceneActivationStateForegroundActive) return ws;
+        UIWindowScene *windowScene = (UIWindowScene *)scene;
+        if (!fallback) fallback = windowScene;
+        if (windowScene.activationState == UISceneActivationStateForegroundActive) return windowScene;
     }
     return fallback;
 }
+
 - (void)start {
     dispatch_async(dispatch_get_main_queue(), ^{
         if (self.started && self.window) return;

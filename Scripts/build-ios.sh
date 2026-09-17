@@ -4,6 +4,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$ROOT/build"
 SDK="$(xcrun --sdk iphoneos --show-sdk-path)"
 mkdir -p "$OUT"
+
 xcrun --sdk iphoneos clang++ \
   -arch arm64 \
   -isysroot "$SDK" \
@@ -12,11 +13,16 @@ xcrun --sdk iphoneos clang++ \
   -fvisibility=hidden \
   -std=c++17 \
   -dynamiclib \
-  -Wl,-install_name,@rpath/DylibCaidan.dylib \
+  -Wl,-install_name,@rpath/NeonModifier.dylib \
   -framework UIKit -framework Foundation -framework QuartzCore -framework CoreGraphics \
-  "$ROOT/Sources/Entry.mm" "$ROOT/Sources/ZNOverlay.mm" "$ROOT/Sources/ZNMenuViewController.mm" \
-  -o "$OUT/DylibCaidan.dylib"
-file "$OUT/DylibCaidan.dylib"
-otool -hv "$OUT/DylibCaidan.dylib"
-otool -L "$OUT/DylibCaidan.dylib"
-echo "Built: $OUT/DylibCaidan.dylib"
+  "$ROOT/Sources/Entry.mm" \
+  "$ROOT/Sources/ZNOverlay.mm" \
+  "$ROOT/Sources/ZNMemoryEngine.mm" \
+  "$ROOT/Sources/ZNMenuViewController.mm" \
+  -o "$OUT/NeonModifier.dylib"
+
+file "$OUT/NeonModifier.dylib"
+otool -hv "$OUT/NeonModifier.dylib"
+otool -L "$OUT/NeonModifier.dylib"
+shasum -a 256 "$OUT/NeonModifier.dylib" | tee "$OUT/SHA256.txt"
+echo "Built: $OUT/NeonModifier.dylib"

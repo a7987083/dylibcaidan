@@ -1,28 +1,32 @@
-name: build-ios-dylib
+name: build-neon-ios-modifier
 
 on:
   push:
     branches:
-      - main
-      - "feature/**"
-  pull_request:
+      - "feature/neon-ios-modifier-v1"
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build arm64 iOS dylib
+      - name: Build arm64 iOS modifier dylib
         run: |
           chmod +x Scripts/build-ios.sh
           Scripts/build-ios.sh
-      - name: Inspect Mach-O
+      - name: Verify Mach-O and exports
         run: |
-          file build/DylibCaidan.dylib
-          otool -hv build/DylibCaidan.dylib
-          otool -L build/DylibCaidan.dylib
+          file build/NeonModifier.dylib
+          otool -hv build/NeonModifier.dylib
+          otool -L build/NeonModifier.dylib
+          strings build/NeonModifier.dylib | grep -q "NEON iOS MODIFIER"
+          strings build/NeonModifier.dylib | grep -q "UnityFramework+0x1A2B3C"
+          cat build/SHA256.txt
       - name: Upload dylib
         uses: actions/upload-artifact@v4
         with:
-          name: DylibCaidan-arm64
-          path: build/DylibCaidan.dylib
+          name: NeonModifier-arm64
+          path: |
+            build/NeonModifier.dylib
+            build/SHA256.txt
