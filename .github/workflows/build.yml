@@ -1,4 +1,4 @@
-name: build-neon-ios-modifier
+name: build-neon-ios-modifier-v2
 
 on:
   push:
@@ -15,18 +15,19 @@ jobs:
         run: |
           chmod +x Scripts/build-ios.sh
           Scripts/build-ios.sh
-      - name: Verify Mach-O and exports
+      - name: Verify Mach-O and Chinese neon theme catalog
         run: |
           file build/NeonModifier.dylib
           otool -hv build/NeonModifier.dylib
           otool -L build/NeonModifier.dylib
-          strings build/NeonModifier.dylib | grep -q "NEON iOS MODIFIER"
           strings build/NeonModifier.dylib | grep -q "UnityFramework+0x1A2B3C"
+          strings build/NeonModifier.dylib | grep -q "ZNNeonModifierThemeIndex"
+          strings build/NeonModifier.dylib | grep -q "20"
           cat build/SHA256.txt
       - name: Upload dylib
         uses: actions/upload-artifact@v4
         with:
-          name: NeonModifier-arm64
+          name: NeonModifier-v0.2.0-Chinese20Styles-arm64
           path: |
             build/NeonModifier.dylib
             build/SHA256.txt
