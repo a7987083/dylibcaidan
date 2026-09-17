@@ -1,5 +1,6 @@
 #import "ZNMenuViewController.h"
 @class ZNSliderRow;
+@class CAGradientLayer;
 @interface ZNMenuViewController () <UICollectionViewDataSource,UICollectionViewDelegateFlowLayout>
 @property(nonatomic,strong)UIView *panel;
 @property(nonatomic,strong)UIView *panelInner;
