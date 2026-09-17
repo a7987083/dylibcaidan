@@ -1,0 +1,22 @@
+{
+  "version": "0.1.0",
+  "repository": "a7987083/dylibcaidan",
+  "branch": "feature/cyberpunk-floating-menu-v1",
+  "baseline": "32a6ded03025df2887fdb474d65d38c8f027c735",
+  "build": {
+    "system": ["xcrun clang++", "Theos"],
+    "target": "iOS arm64",
+    "minimum_ios": "13.0",
+    "local_verified": false
+  },
+  "ci": {
+    "workflow": ".github/workflows/build.yml",
+    "status": "pending"
+  },
+  "runtime": {
+    "device_verified": false,
+    "injection_verified": false
+  },
+  "phase": "floating-ui-shell",
+  "next_task": "wait for CI build result, then runtime-test the produced dylib in an authorized test app"
+}
