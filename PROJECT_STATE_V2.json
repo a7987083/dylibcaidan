@@ -1,0 +1,26 @@
+{
+  "version": "0.2.0",
+  "repository": "a7987083/dylibcaidan",
+  "branch": "feature/cyberpunk-pixelmatch-v2",
+  "code_commit": "1f2ef8055f422fffa891ace2e86eabde506cb846",
+  "baseline": "818bce37dd8a84980f4d831f3c5cce11b13fde1b",
+  "build": {
+    "target": "iOS arm64",
+    "minimum_ios": "13.0",
+    "ci_verified": true,
+    "mach_o_verified": true,
+    "artifact": "DylibCaidan-arm64"
+  },
+  "ci": {
+    "workflow": ".github/workflows/build.yml",
+    "run_id": 35255740382,
+    "status": "success"
+  },
+  "runtime": {
+    "device_verified": false,
+    "visual_pixelmatch_verified": false,
+    "touch_passthrough_verified": false
+  },
+  "phase": "v2-built-awaiting-device-validation",
+  "next_task": "inject latest v2 dylib into the authorized test app and compare a fresh device screenshot against the concept image"
+}
