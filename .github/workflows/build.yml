@@ -1,4 +1,4 @@
-name: build-neon-ios-modifier-v2
+name: build-neon-ios-modifier-v3
 
 on:
   push:
@@ -15,19 +15,21 @@ jobs:
         run: |
           chmod +x Scripts/build-ios.sh
           Scripts/build-ios.sh
-      - name: Verify Mach-O and Chinese neon theme catalog
+      - name: Verify Mach-O and Chinese 20-layout UI
         run: |
           file build/NeonModifier.dylib
           otool -hv build/NeonModifier.dylib
           otool -L build/NeonModifier.dylib
           strings build/NeonModifier.dylib | grep -q "UnityFramework+0x1A2B3C"
-          strings build/NeonModifier.dylib | grep -q "ZNNeonModifierThemeIndex"
-          strings build/NeonModifier.dylib | grep -q "20"
+          strings build/NeonModifier.dylib | grep -q "ZNNeonModifierLayoutIndex"
+          strings build/NeonModifier.dylib | grep -q "经典三栏"
+          strings build/NeonModifier.dylib | grep -q "赛博仪表盘"
+          strings build/NeonModifier.dylib | grep -q "选择布局风格"
           cat build/SHA256.txt
       - name: Upload dylib
         uses: actions/upload-artifact@v4
         with:
-          name: NeonModifier-v0.2.0-Chinese20Styles-arm64
+          name: NeonModifier-v0.3.0-Chinese20Layouts-arm64
           path: |
             build/NeonModifier.dylib
             build/SHA256.txt
