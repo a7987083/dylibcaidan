@@ -3,20 +3,25 @@
   "repository": "a7987083/dylibcaidan",
   "branch": "feature/cyberpunk-floating-menu-v1",
   "baseline": "32a6ded03025df2887fdb474d65d38c8f027c735",
+  "head": "db3332e65031744c6d18bbfdc1b527d5a08f96f9",
   "build": {
     "system": ["xcrun clang++", "Theos"],
     "target": "iOS arm64",
     "minimum_ios": "13.0",
-    "local_verified": false
+    "local_verified": false,
+    "ci_compiled": true,
+    "macho": "Mach-O 64-bit dynamically linked shared library arm64",
+    "artifact_sha256": "61a8331f97c3e7914cbea7025edda9aff3bbe4ff9e966b318e08ef694a7fa6ce"
   },
   "ci": {
     "workflow": ".github/workflows/build.yml",
-    "status": "pending"
+    "run_id": 35195545064,
+    "status": "success"
   },
   "runtime": {
     "device_verified": false,
     "injection_verified": false
   },
-  "phase": "floating-ui-shell",
-  "next_task": "wait for CI build result, then runtime-test the produced dylib in an authorized test app"
+  "phase": "floating-ui-shell-compiled",
+  "next_task": "runtime-test the compiled dylib in an authorized target and verify touch, scene, rotation and suspend/resume behavior"
 }

@@ -16,8 +16,16 @@ Implemented:
 - macOS GitHub Actions build workflow.
 - Project handoff/state/known-issues documentation.
 
+Build history:
+- Initial CI run failed in `Sources/ZNOverlay.mm` at `__weak typeof(self)` under the Objective-C++ C++17 build.
+- Root cause fixed by replacing GNU `typeof` with the explicit Objective-C type `__weak ZNOverlayRootController *`.
+- Follow-up CI run `35195545064` passed.
+- Produced `DylibCaidan.dylib`, Mach-O 64-bit ARM64 dynamic library.
+- Extracted dylib SHA-256: `61a8331f97c3e7914cbea7025edda9aff3bbe4ff9e966b318e08ef694a7fa6ce`.
+
 Validation state:
 - Source review: completed.
-- Git repository write: completed on feature branch.
-- CI compilation: pending workflow result.
+- Git repository write: completed.
+- CI compilation: passed.
+- Mach-O type/dependencies inspection: passed.
 - Runtime/device validation: not performed.
