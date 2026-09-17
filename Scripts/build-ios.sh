@@ -14,7 +14,12 @@ xcrun --sdk iphoneos clang++ \
   -dynamiclib \
   -Wl,-install_name,@rpath/DylibCaidan.dylib \
   -framework UIKit -framework Foundation -framework QuartzCore -framework CoreGraphics \
-  "$ROOT/Sources/Entry.mm" "$ROOT/Sources/ZNOverlay.mm" "$ROOT/Sources/ZNMenuViewController.mm" \
+  "$ROOT/Sources/Entry.mm" \
+  "$ROOT/Sources/ZNOverlay.mm" \
+  "$ROOT/Sources/ZNEmbeddedAssets.mm" \
+  "$ROOT/Sources/ZNUIComponents.mm" \
+  "$ROOT/Sources/ZNMenuViewControllerV2.mm" \
+  "$ROOT/Sources/ZNMenuLayout.mm" \
   -o "$OUT/DylibCaidan.dylib"
 file "$OUT/DylibCaidan.dylib"
 otool -hv "$OUT/DylibCaidan.dylib"
