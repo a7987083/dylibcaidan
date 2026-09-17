@@ -19,6 +19,8 @@ xcrun --sdk iphoneos clang++ \
   "$ROOT/Sources/ZNOverlay.mm" \
   "$ROOT/Sources/ZNMemoryEngine.mm" \
   "$ROOT/Sources/ZNCompactLayoutFix.mm" \
+  "$ROOT/Sources/ZNUIStabilityV032.mm" \
+  "$ROOT/Sources/ZNRuntimeSafetyV032.mm" \
   "$ROOT/Sources/ZNMenuViewController.mm" \
   -o "$OUT/NeonModifier.dylib"
 
