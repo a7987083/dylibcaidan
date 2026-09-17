@@ -74,9 +74,9 @@ def validate():
             assert all(inside(r,w,h) for r in rects), (w,h,idx,rects)
             for a,b in combinations(rects,2):
                 assert area_of_intersection(a,b) < 1.0, (w,h,idx,a,b)
-            # Keep the editor usable enough for the adaptive internal layout engine.
+            # v0.3.2 has a dedicated two-row narrow editor mode down to 125pt.
             ex,ey,ew,eh=rects[1]
-            assert ew >= 150 and eh >= 145, (w,h,idx,'editor too small',rects[1])
+            assert ew >= 125 and eh >= 145, (w,h,idx,'editor too small',rects[1])
             signatures.add(tuple(round(v,1) for r in rects for v in r))
         assert len(signatures) == 20, (w,h,'layouts not distinct',len(signatures))
 
