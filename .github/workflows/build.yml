@@ -63,6 +63,8 @@ jobs:
           grep -q 'payload-v2+static-rva-protection-v1' "$src/ZNGeneratedBinaryPostprocess.mm"
           grep -q 'ZNCyberpunkRuntimeSkin.mm' "$makefile"
           grep -q 'ZNCyberpunkUIInstallDeferred' "$src/ZNDeferredBootstrap.mm"
+          grep -q 'v0.5.6.2 SEALED CORE' "$src/ZNCyberpunkRuntimeSkin.mm"
+          grep -q 'P L A Y   B E Y O N D   L I M I T S' "$src/ZNCyberpunkRuntimeSkin.mm"
 
           compiled="$(sed -n 's/^ZonoePatchV03_FILES = //p' "$makefile")"
           ctor_hits=""
@@ -121,8 +123,6 @@ jobs:
           nm -gU "$out" | grep '_ZonoePatchDeveloperAuthorized'
           nm -gU "$out" | grep '_ZonoePatchOtherAuthorized'
           strings "$out" > /tmp/zncy_strings.txt
-          grep -q 'v0.5.6.2 SEALED CORE' /tmp/zncy_strings.txt
-          grep -q 'P L A Y   B E Y O N D   L I M I T S' /tmp/zncy_strings.txt
           grep -q 'payload-v2+static-rva-protection-v1' /tmp/zncy_strings.txt
           ! grep -q 'ZonoPatch-v0.5.6.2.log' /tmp/zncy_strings.txt
 
