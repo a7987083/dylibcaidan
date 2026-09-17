@@ -101,7 +101,7 @@
 
     self.floatingButton = [[ZNFloatingButton alloc] initWithFrame:CGRectMake(18, 96, 54, 54)];
     [self.view addSubview:self.floatingButton];
-    __weak typeof(self) weakSelf = self;
+    __weak ZNOverlayRootController *weakSelf = self;
     self.floatingButton.tapHandler = ^{
         [weakSelf.menuController toggleMenu];
         [weakSelf.view bringSubviewToFront:weakSelf.floatingButton];
