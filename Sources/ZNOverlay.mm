@@ -1,4 +1,5 @@
 #import "ZNOverlay.h"
+#import "SatellaPassiveCaller.h"
 #import "ZNMenuViewController.h"
 #import <QuartzCore/QuartzCore.h>
 
@@ -103,7 +104,8 @@
     [self.view addSubview:self.floatingButton];
     __weak ZNOverlayRootController *weakSelf = self;
     self.floatingButton.tapHandler = ^{
-        [weakSelf.menuController toggleMenu];
+        ZNSatellaStartResult result = ZNSatellaPassiveStart();
+        NSLog(@"[DylibCaidan] Satella passive launch: %@", ZNSatellaStartResultString(result));
         [weakSelf.view bringSubviewToFront:weakSelf.floatingButton];
     };
 }
