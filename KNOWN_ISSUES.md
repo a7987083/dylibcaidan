@@ -36,3 +36,18 @@ Controls currently emit `ZNMenuValueChangedNotification`. Application-specific f
 Status: open
 
 Some host apps may change window level, scene state or orientation after launch. The overlay architecture is unchanged from V1 and needs target-app runtime validation.
+
+
+## KI-007 — Passive Satella launcher requires exact paired build
+Status: open / runtime validation required
+
+The launcher accepts only the verified passive Satella build. It checks `RET` at RVA `0x847C` and the expected initializer prologue at RVA `0x888C`. A different Satella version must be re-located and re-verified; these RVAs must not be reused by assumption.
+
+The launcher artifact does not embed or publish `1_passive.dylib`. The paired passive dylib must be included in the authorized test package, signed by the existing injection/signing pipeline, or already loaded in-process.
+
+Required verification:
+- both dylibs load without signature/dyld failure
+- floating button remains draggable
+- first tap starts Satella exactly once
+- subsequent taps do not reinstall hooks
+- target app background/foreground cycle remains stable
