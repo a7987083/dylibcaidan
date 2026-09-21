@@ -1,4 +1,4 @@
-name: build-zonopatch-v0563-cyberpunk-ui
+name: build-cyberpunk-ui-and-satella-launcher
 
 on:
   push:
@@ -8,6 +8,57 @@ on:
   workflow_dispatch:
 
 jobs:
+  build-satella-launcher:
+    runs-on: macos-15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout launcher source
+        uses: actions/checkout@v4
+
+      - name: Verify passive-launch source contract
+        run: |
+          set -euxo pipefail
+          grep -q 'kSatellaCtorRVA = 0x847C' Sources/SatellaPassiveCaller.mm
+          grep -q 'kSatellaInitRVA = 0x888C' Sources/SatellaPassiveCaller.mm
+          grep -q '0xC0, 0x03, 0x5F, 0xD6' Sources/SatellaPassiveCaller.mm
+          grep -q 'ZNSatellaPassiveStart()' Sources/ZNOverlay.mm
+          grep -q 'Sources/SatellaPassiveCaller.mm' Makefile
+          grep -q 'Sources/SatellaPassiveCaller.mm' Scripts/build-ios.sh
+
+      - name: Build floating launcher dylib
+        run: |
+          set -euxo pipefail
+          bash Scripts/build-ios.sh
+
+      - name: Install ldid
+        run: |
+          set -euxo pipefail
+          brew install ldid
+
+      - name: Sign and inspect launcher
+        run: |
+          set -euxo pipefail
+          out=build/DylibCaidan.dylib
+          ldid -S "$out"
+          file "$out"
+          otool -hv "$out"
+          otool -L "$out"
+          nm "$out" | grep 'ZNSatellaPassiveStart'
+          strings "$out" | grep -q '1_passive.dylib'
+          mkdir -p dist-satella-launcher
+          cp "$out" dist-satella-launcher/DylibCaidan_SatellaLauncher.dylib
+          shasum -a 256 dist-satella-launcher/DylibCaidan_SatellaLauncher.dylib | tee dist-satella-launcher/SHA256.txt
+
+      - name: Upload floating launcher artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DylibCaidan-SatellaLauncher-arm64
+          path: |
+            dist-satella-launcher/DylibCaidan_SatellaLauncher.dylib
+            dist-satella-launcher/SHA256.txt
+          if-no-files-found: error
+
   build:
     runs-on: macos-15
     permissions:
