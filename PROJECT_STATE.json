@@ -1,32 +1,48 @@
 {
-  "version": "0.2.0",
+  "version": "0.3.0",
   "repository": "a7987083/dylibcaidan",
-  "branch": "feature/cyberpunk-pixelmatch-v2",
+  "branch": "feature/satella-passive-launch-v1",
   "baseline": "818bce37dd8a84980f4d831f3c5cce11b13fde1b",
-  "code_commit": "1f2ef8055f422fffa891ace2e86eabde506cb846",
+  "code_commit": "b5c185d1de98983a8b304a9e6a07e544daef7eb9",
   "build": {
-    "system": ["xcrun clang++", "Theos"],
+    "system": [
+      "xcrun clang++",
+      "GitHub Actions macos-15",
+      "ldid"
+    ],
     "target": "iOS arm64",
     "minimum_ios": "13.0",
-    "ci_compiled": true,
-    "macho_verified": true,
-    "macho": "Mach-O 64-bit arm64 dynamically linked shared library",
-    "artifact_name": "DylibCaidan-arm64",
-    "artifact_id": 10513230174,
-    "artifact_sha256": "a4ab2874696082b8ed5779c3d17b04e9585f17dc2b4c8432530ed24fcb0534b8"
+    "ci_compiled": false,
+    "macho_verified": false,
+    "artifact_name": "DylibCaidan-SatellaLauncher-arm64",
+    "artifact_id": null,
+    "artifact_sha256": null
   },
   "ci": {
     "workflow": ".github/workflows/build.yml",
-    "run_id": 35255740382,
-    "status": "success"
+    "run_id": 35568073835,
+    "status": "queued"
   },
   "runtime": {
     "device_verified": false,
     "injection_verified": false,
-    "visual_pixelmatch_verified": false,
-    "touch_passthrough_verified": false,
-    "rotation_verified": false
+    "floating_button_launch_verified": false,
+    "target_initializer_verified_at_runtime": false
   },
-  "phase": "v2-built-awaiting-device-validation",
-  "next_task": "inject V2 dylib into the authorized test app, capture a fresh landscape screenshot, compare against the concept, then make measured visual adjustments"
+  "phase": "satella-passive-launcher-ci-running",
+  "next_task": "Complete Actions run 35568073835, inspect artifact, then inject launcher plus exact 1_passive.dylib into the authorized test target and verify one-tap activation.",
+  "previous_verified_baseline": {
+    "branch": "feature/cyberpunk-pixelmatch-v2",
+    "code_commit": "1f2ef8055f422fffa891ace2e86eabde506cb846",
+    "ci_run_id": 35255740382,
+    "artifact_sha256": "a4ab2874696082b8ed5779c3d17b04e9585f17dc2b4c8432530ed24fcb0534b8"
+  },
+  "satella_target": {
+    "original_sha256": "ac8587090f3421d1ef9f629f9eac543deede82d608059a347be62b6cbad161d5",
+    "passive_sha256": "30de5e72b2ea1b1c2df88cdd384c67a63811157e12ae0ec5a650c8556213a642",
+    "constructor_rva": "0x847C",
+    "constructor_bytes": "C0 03 5F D6",
+    "initializer_rva": "0x888C",
+    "initializer_prologue": "FC 6F BA A9 FA 67 01 A9 F8 5F 02 A9 F6 57 03 A9"
+  }
 }
