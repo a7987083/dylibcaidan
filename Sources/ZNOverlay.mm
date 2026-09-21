@@ -97,6 +97,8 @@
 @interface ZNOverlayRootController : UIViewController
 @property (nonatomic, strong) ZNMenuViewController *menuController;
 @property (nonatomic, strong) ZNFloatingButton *floatingButton;
+@property (nonatomic, strong) UILabel *launcherStatusLabel;
+- (void)showLauncherStatus:(NSString *)status success:(BOOL)success;
 @end
 
 @implementation ZNOverlayRootController
@@ -115,9 +117,50 @@
     __weak ZNOverlayRootController *weakSelf = self;
     self.floatingButton.tapHandler = ^{
         BOOL started = ZNSatellaStart();
-        NSLog(@"[SATELLA_TEST_LAUNCHER] tap -> %@", started ? @"started" : @"not started");
+        NSString *status = ZNSatellaLastStatus();
+        NSLog(@"[SATELLA_TEST_LAUNCHER_V2] tap -> %@ | %@", started ? @"started" : @"not started", status);
+        [weakSelf showLauncherStatus:status success:started];
         [weakSelf.view bringSubviewToFront:weakSelf.floatingButton];
     };
+}
+
+- (void)showLauncherStatus:(NSString *)status success:(BOOL)success {
+    [self.launcherStatusLabel removeFromSuperview];
+
+    UILabel *label = [[UILabel alloc] initWithFrame:CGRectZero];
+    label.numberOfLines = 0;
+    label.textAlignment = NSTextAlignmentCenter;
+    label.font = [UIFont monospacedSystemFontOfSize:11.0 weight:UIFontWeightSemibold];
+    label.textColor = UIColor.whiteColor;
+    label.backgroundColor = [UIColor colorWithWhite:0.02 alpha:0.92];
+    label.layer.cornerRadius = 10.0;
+    label.layer.masksToBounds = YES;
+    label.layer.borderWidth = 1.0;
+    label.layer.borderColor = (success ? UIColor.systemGreenColor : UIColor.systemRedColor).CGColor;
+    label.text = status.length ? status : (success ? @"Satella 调用成功" : @"Satella 调用失败");
+
+    CGFloat width = MIN(330.0, MAX(220.0, CGRectGetWidth(self.view.bounds) - 40.0));
+    CGSize fit = [label sizeThatFits:CGSizeMake(width - 24.0, CGFLOAT_MAX)];
+    CGFloat height = MAX(54.0, fit.height + 22.0);
+    label.frame = CGRectMake((CGRectGetWidth(self.view.bounds) - width) * 0.5,
+                             MAX(self.view.safeAreaInsets.top + 16.0, 50.0),
+                             width,
+                             height);
+    label.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin;
+    [self.view addSubview:label];
+    [self.view bringSubviewToFront:label];
+    [self.view bringSubviewToFront:self.floatingButton];
+    self.launcherStatusLabel = label;
+
+    __weak UILabel *weakLabel = label;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.2 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        [UIView animateWithDuration:0.20 animations:^{
+            weakLabel.alpha = 0.0;
+        } completion:^(__unused BOOL finished) {
+            [weakLabel removeFromSuperview];
+        }];
+    });
 }
 
 - (void)viewDidLayoutSubviews {

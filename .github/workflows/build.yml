@@ -42,8 +42,11 @@ jobs:
           overlay = Path('Sources/ZNOverlay.mm').read_text()
           bridge = Path('Sources/ZNSatellaBridge.mm').read_text()
           assert 'ZNSatellaStart();' in overlay
-          assert 'SATELLA_TEST_LAUNCHER' in overlay
+          assert 'SATELLA_TEST_LAUNCHER_V2' in overlay
           assert 'kZNSatellaEntryRVA = 0x888C' in bridge
+          assert 'dlopen(' in bridge
+          assert 'ZNSatellaLastStatus' in bridge
+          assert 'kZNSatellaEntryPrefix' in bridge
           assert 'CCE726AA' not in bridge  # UUID is stored as bytes, not a fragile string
           print('v0.3.2 + Satella launcher source contract: PASS')
           PY
@@ -63,13 +66,15 @@ jobs:
           strings build/NeonModifier.dylib | grep -q "ZN_RUNTIME_SAFETY_V032"
           strings build/NeonModifier.dylib | grep -q "ZNLayoutPickerScrollV032"
           strings build/NeonModifier.dylib | grep -q "ZNNeonModifierLayoutIndex"
-          strings build/NeonModifier.dylib | grep -q "SATELLA_TEST_LAUNCHER"
+          strings build/NeonModifier.dylib | grep -q "SATELLA_TEST_LAUNCHER_V2"
+          strings build/NeonModifier.dylib | grep -q "SatellaJailed-passive.dylib"
+          strings build/NeonModifier.dylib | grep -q "入口已调用成功"
           cat build/SHA256.txt
 
       - name: Upload dylib
         uses: actions/upload-artifact@v4
         with:
-          name: NeonModifier-SatellaTestLauncher-arm64
+          name: NeonModifier-SatellaTestLauncher-v2-arm64
           path: |
             build/NeonModifier.dylib
             build/SHA256.txt
