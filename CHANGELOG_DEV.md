@@ -1,5 +1,27 @@
 # CHANGELOG_DEV
 
+## 2026-09-21 — Passive Satella launcher integration
+
+Branch: `feature/satella-passive-launch-v1`
+
+Implemented:
+- Added `SatellaPassiveCaller.h/.mm`.
+- Floating-button tap now calls the verified passive Satella initializer instead of opening the local DylibCaidan menu.
+- Runtime validation requires passive constructor bytes `C0 03 5F D6` at RVA `0x847C` and the verified 16-byte initializer prologue at RVA `0x888C`.
+- If the target is not already loaded, only `1_passive.dylib` in the app bundle/private Frameworks path is considered, and its bytes are validated before `dlopen`.
+- Updated standalone Makefile/build script to compile the caller.
+- Added dedicated Actions job/artifact `DylibCaidan-SatellaLauncher-arm64`.
+- Source/CI commit: `b5c185d1de98983a8b304a9e6a07e544daef7eb9`.
+- Actions run: `35568073835` (queued at documentation update time).
+
+Validation:
+- Source changed: yes.
+- Exact target Mach-O offsets/prologue verified from supplied binary: yes.
+- CI compiled: pending.
+- Mach-O inspected: pending.
+- Runtime/device verified: no.
+
+
 ## 2026-09-17 — Cyberpunk floating menu v1
 
 Branch: `feature/cyberpunk-floating-menu-v1`
