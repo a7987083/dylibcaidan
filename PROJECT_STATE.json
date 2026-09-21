@@ -3,7 +3,7 @@
   "repository": "a7987083/dylibcaidan",
   "branch": "feature/satella-passive-launch-v1",
   "baseline": "818bce37dd8a84980f4d831f3c5cce11b13fde1b",
-  "code_commit": "b5c185d1de98983a8b304a9e6a07e544daef7eb9",
+  "code_commit": "5d5a768305a14e5b33c0bc04a01ce67706f54614",
   "build": {
     "system": [
       "xcrun clang++",
@@ -12,16 +12,21 @@
     ],
     "target": "iOS arm64",
     "minimum_ios": "13.0",
-    "ci_compiled": false,
-    "macho_verified": false,
+    "ci_compiled": true,
+    "ldid_signed": true,
+    "macho_verified": true,
+    "macho": "Mach-O 64-bit arm64 dynamically linked shared library",
     "artifact_name": "DylibCaidan-SatellaLauncher-arm64",
-    "artifact_id": null,
-    "artifact_sha256": null
+    "artifact_id": 10625171505,
+    "artifact_sha256": "14f64d338c807b8388b03ffe5c6016922648f43c1026b18082c97c2844098530",
+    "artifact_zip_digest": "sha256:57d5b20960e99e480b05c7b7b383e343fdfbb69cdcd716fc1078211b6e82115a"
   },
   "ci": {
     "workflow": ".github/workflows/build.yml",
-    "run_id": 35568073835,
-    "status": "queued"
+    "run_id": 35568200244,
+    "status": "success",
+    "launcher_job": "success",
+    "sealed_core_job": "success"
   },
   "runtime": {
     "device_verified": false,
@@ -29,8 +34,8 @@
     "floating_button_launch_verified": false,
     "target_initializer_verified_at_runtime": false
   },
-  "phase": "satella-passive-launcher-ci-running",
-  "next_task": "Complete Actions run 35568073835, inspect artifact, then inject launcher plus exact 1_passive.dylib into the authorized test target and verify one-tap activation.",
+  "phase": "satella-passive-launcher-ci-verified-device-pending",
+  "next_task": "Inject DylibCaidan_SatellaLauncher.dylib plus the exact 1_passive.dylib into the authorized test target and verify first-tap activation, one-shot behavior, dragging, and background/foreground stability.",
   "previous_verified_baseline": {
     "branch": "feature/cyberpunk-pixelmatch-v2",
     "code_commit": "1f2ef8055f422fffa891ace2e86eabde506cb846",
