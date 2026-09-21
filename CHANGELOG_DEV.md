@@ -11,8 +11,8 @@ Implemented:
 - If the target is not already loaded, only `1_passive.dylib` in the app bundle/private Frameworks path is considered, and its bytes are validated before `dlopen`.
 - Updated standalone Makefile/build script to compile the caller.
 - Added dedicated Actions job/artifact `DylibCaidan-SatellaLauncher-arm64`.
-- Source/CI commit: `b5c185d1de98983a8b304a9e6a07e544daef7eb9`.
-- Actions run: `35568073835` (queued at documentation update time).
+- Final source/CI commit: `5d5a768305a14e5b33c0bc04a01ce67706f54614`.
+- Actions run: `35568200244` — success.
 
 Validation:
 - Source changed: yes.
