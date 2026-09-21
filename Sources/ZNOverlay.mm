@@ -1,5 +1,6 @@
 #import "ZNOverlay.h"
 #import "ZNMenuViewController.h"
+#import "ZNSatellaBridge.h"
 #import <QuartzCore/QuartzCore.h>
 
 @implementation ZNOverlayWindow
@@ -113,7 +114,8 @@
     [self.view addSubview:self.floatingButton];
     __weak ZNOverlayRootController *weakSelf = self;
     self.floatingButton.tapHandler = ^{
-        [weakSelf.menuController toggleMenu];
+        BOOL started = ZNSatellaStart();
+        NSLog(@"[SATELLA_TEST_LAUNCHER] tap -> %@", started ? @"started" : @"not started");
         [weakSelf.view bringSubviewToFront:weakSelf.floatingButton];
     };
 }

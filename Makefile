@@ -7,6 +7,7 @@ LIBRARY_NAME = NeonModifier
 NeonModifier_FILES = \
     Sources/Entry.mm \
     Sources/ZNOverlay.mm \
+    Sources/ZNSatellaBridge.mm \
     Sources/ZNMemoryEngine.mm \
     Sources/ZNCompactLayoutFix.mm \
     Sources/ZNUIStabilityV032.mm \

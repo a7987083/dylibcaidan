@@ -17,6 +17,7 @@ xcrun --sdk iphoneos clang++ \
   -framework UIKit -framework Foundation -framework QuartzCore -framework CoreGraphics \
   "$ROOT/Sources/Entry.mm" \
   "$ROOT/Sources/ZNOverlay.mm" \
+  "$ROOT/Sources/ZNSatellaBridge.mm" \
   "$ROOT/Sources/ZNMemoryEngine.mm" \
   "$ROOT/Sources/ZNCompactLayoutFix.mm" \
   "$ROOT/Sources/ZNUIStabilityV032.mm" \

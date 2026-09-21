@@ -33,13 +33,19 @@ jobs:
           assert 'ZNPatchedOverlayHitTest' in ui
           assert 'ZNInstallUIStabilityV032();' in entry
           assert 'ZNInstallRuntimeSafetyV032();' in entry
-          required = ['ZNMemoryEngine.mm','ZNCompactLayoutFix.mm','ZNUIStabilityV032.mm','ZNRuntimeSafetyV032.mm','ZNMenuViewController.mm']
+          required = ['ZNSatellaBridge.mm','ZNMemoryEngine.mm','ZNCompactLayoutFix.mm','ZNUIStabilityV032.mm','ZNRuntimeSafetyV032.mm','ZNMenuViewController.mm']
           for name in required:
               assert name in makefile, f'Makefile missing {name}'
               assert name in build, f'build-ios.sh missing {name}'
           assert '@rpath/NeonModifier.dylib' in makefile
           assert '@rpath/NeonModifier.dylib' in build
-          print('v0.3.2 source contract: PASS')
+          overlay = Path('Sources/ZNOverlay.mm').read_text()
+          bridge = Path('Sources/ZNSatellaBridge.mm').read_text()
+          assert 'ZNSatellaStart();' in overlay
+          assert 'SATELLA_TEST_LAUNCHER' in overlay
+          assert 'kZNSatellaEntryRVA = 0x888C' in bridge
+          assert 'CCE726AA' not in bridge  # UUID is stored as bytes, not a fragile string
+          print('v0.3.2 + Satella launcher source contract: PASS')
           PY
 
       - name: Build arm64 iOS modifier dylib
@@ -57,12 +63,13 @@ jobs:
           strings build/NeonModifier.dylib | grep -q "ZN_RUNTIME_SAFETY_V032"
           strings build/NeonModifier.dylib | grep -q "ZNLayoutPickerScrollV032"
           strings build/NeonModifier.dylib | grep -q "ZNNeonModifierLayoutIndex"
+          strings build/NeonModifier.dylib | grep -q "SATELLA_TEST_LAUNCHER"
           cat build/SHA256.txt
 
       - name: Upload dylib
         uses: actions/upload-artifact@v4
         with:
-          name: NeonModifier-v0.3.2-Stable20Layouts-arm64
+          name: NeonModifier-SatellaTestLauncher-arm64
           path: |
             build/NeonModifier.dylib
             build/SHA256.txt
