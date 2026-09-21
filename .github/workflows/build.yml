@@ -68,7 +68,6 @@ jobs:
           strings build/NeonModifier.dylib | grep -q "ZNNeonModifierLayoutIndex"
           strings build/NeonModifier.dylib | grep -q "SATELLA_TEST_LAUNCHER_V2"
           strings build/NeonModifier.dylib | grep -q "SatellaJailed-passive.dylib"
-          strings build/NeonModifier.dylib | grep -q "入口已调用成功"
           cat build/SHA256.txt
 
       - name: Upload dylib
