@@ -34,3 +34,16 @@ Next task:
 - Add typed host callbacks/delegates as needed.
 - Persist menu position and values.
 - Optionally add JSON-driven feature definitions.
+
+
+## Phase 5 — Passive Satella launcher
+Status: implemented / CI run 35568073835 queued
+
+- [x] Preserve draggable floating button and overlay lifecycle.
+- [x] Change floating-button tap from local menu toggle to Satella passive activation.
+- [x] Validate exact passive constructor patch at RVA `0x847C` before activation.
+- [x] Validate exact init prologue at RVA `0x888C` before calling.
+- [x] Allow already-loaded target or a pre-validated `1_passive.dylib` in app/Frameworks.
+- [x] Add independent GitHub Actions artifact `DylibCaidan-SatellaLauncher-arm64`.
+- [ ] GitHub Actions compile/sign/Mach-O verification for source commit `b5c185d1de98983a8b304a9e6a07e544daef7eb9`.
+- [ ] Authorized-device injection/runtime verification with the paired passive Satella build.
