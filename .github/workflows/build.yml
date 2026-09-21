@@ -5,6 +5,13 @@ on:
     branches:
       - main
       - "feature/**"
+    paths-ignore:
+      - ROADMAP.md
+      - CHANGELOG_DEV.md
+      - HANDOFF.md
+      - PROJECT_STATE.json
+      - PROJECT_STATE_V2.json
+      - KNOWN_ISSUES.md
   workflow_dispatch:
 
 jobs:
