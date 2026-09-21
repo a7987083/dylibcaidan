@@ -15,6 +15,7 @@ xcrun --sdk iphoneos clang++ \
   -Wl,-install_name,@rpath/DylibCaidan.dylib \
   -framework UIKit -framework Foundation -framework QuartzCore -framework CoreGraphics \
   "$ROOT/Sources/Entry.mm" \
+  "$ROOT/Sources/SatellaPassiveCaller.mm" \
   "$ROOT/Sources/ZNOverlay.mm" \
   "$ROOT/Sources/ZNEmbeddedAssets.mm" \
   "$ROOT/Sources/ZNUIComponents.mm" \
