@@ -19,6 +19,11 @@
 #import <objc/runtime.h>
 #import <objc/message.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <dispatch/dispatch.h>
 
 typedef unsigned long usize_t;
 typedef long isize_t;
@@ -36,20 +41,6 @@ typedef struct {
 extern void _dyld_register_func_for_add_image(void (*func)(const struct mach_header *, intptr_t));
 extern int dladdr(const void *addr, Dl_info *info);
 extern void *dlsym(void *handle, const char *symbol);
-
-extern void *malloc(usize_t size);
-extern void free(void *ptr);
-extern void *memcpy(void *dst, const void *src, usize_t n);
-extern usize_t strlen(const char *s);
-extern int strcmp(const char *a, const char *b);
-extern int snprintf(char *dst, usize_t cap, const char *fmt, ...);
-extern int printf(const char *fmt, ...);
-extern int getpid(void);
-
-typedef void *dispatch_queue_t;
-struct dispatch_queue_s;
-extern struct dispatch_queue_s _dispatch_main_q;
-extern void dispatch_async_f(dispatch_queue_t queue, void *context, void (*work)(void *));
 
 #define RTLD_DEFAULT ((void *)(intptr_t)-2)
 #define NULLPTR ((void *)0)
@@ -792,7 +783,7 @@ static void ImageAdded(const struct mach_header *mh, intptr_t vmaddr_slide) {
 
     /* Keep dyld callback minimal; Foundation/session setup runs on main queue. */
     gInstallScheduled = 1;
-    dispatch_async_f((dispatch_queue_t)&_dispatch_main_q, (void *)mh, DeferredInstall);
+    dispatch_async_f(dispatch_get_main_queue(), (void *)mh, DeferredInstall);
 }
 
 __attribute__((constructor))
