@@ -62,7 +62,8 @@ extern int printf(const char *fmt, ...);
 extern int getpid(void);
 
 typedef void *dispatch_queue_t;
-extern dispatch_queue_t dispatch_get_main_queue(void);
+struct dispatch_queue_s;
+extern struct dispatch_queue_s _dispatch_main_q;
 extern void dispatch_async_f(dispatch_queue_t queue, void *context, void (*work)(void *));
 
 #define RTLD_DEFAULT ((void *)(intptr_t)-2)
