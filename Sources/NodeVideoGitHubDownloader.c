@@ -806,7 +806,7 @@ static void ImageAdded(const struct mach_header *mh, intptr_t vmaddr_slide) {
 
     /* Keep dyld callback minimal; Foundation/session setup runs on main queue. */
     gInstallScheduled = 1;
-    dispatch_async_f(dispatch_get_main_queue(), (void *)mh, DeferredInstall);
+    dispatch_async_f((dispatch_queue_t)&_dispatch_main_q, (void *)mh, DeferredInstall);
 }
 
 __attribute__((constructor))
