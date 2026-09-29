@@ -61,6 +61,11 @@ extern int snprintf(char *dst, usize_t cap, const char *fmt, ...);
 extern int printf(const char *fmt, ...);
 extern int getpid(void);
 
+typedef struct __sFILE FILE;
+extern FILE *fopen(const char *path, const char *mode);
+extern int fprintf(FILE *stream, const char *format, ...);
+extern int fclose(FILE *stream);
+
 typedef void *dispatch_queue_t;
 struct dispatch_queue_s;
 extern struct dispatch_queue_s _dispatch_main_q;
@@ -166,6 +171,8 @@ typedef void (*ProgressTitleFn)(void *bar, void *title, void *methodInfo);
 typedef int (*MoveNextFn)(void *sm, void *methodInfo);
 typedef void (*MSHookFunctionFn)(void *symbol, void *replace, void **result);
 typedef int (*DobbyHookFn)(void *address, void *replace, void **origin);
+extern int DobbyHook(void *address, void *fake_func, void **out_origin_func);
+extern int DobbyDestroy(void *address);
 
 static Il2CppStringNewFn gIl2CppStringNew = NULLPTR;
 static CloseFn gClose = NULLPTR;
@@ -180,6 +187,9 @@ static id gDelegate = NULLPTR;
 static int gHookInstalled = 0;
 static int gInstallScheduled = 0;
 static int gEnabled = 1;
+static void *gHookTarget = NULLPTR;
+static int gUsingEmbeddedDobby = 0;
+static char gStatusLogPath[PATH_CAP];
 
 /* ---------- state ---------- */
 typedef enum {
@@ -361,6 +371,19 @@ static int GetDocumentsPath(char *out, usize_t cap) {
     if (!utf8) return 0;
     CopyString(out, cap, utf8);
     return out[0] != '\0';
+}
+
+static void StatusLog(const char *message) {
+    if (!message) return;
+    if (gStatusLogPath[0] == '\0') {
+        char docs[PATH_CAP];
+        if (!GetDocumentsPath(docs, sizeof(docs))) return;
+        snprintf(gStatusLogPath, sizeof(gStatusLogPath), "%s/NodeVideoGitHubDownloader.log", docs);
+    }
+    FILE *f = fopen(gStatusLogPath, "a");
+    if (!f) return;
+    fprintf(f, "%s\n", message);
+    fclose(f);
 }
 
 static void MkdirPath(const char *path) {
@@ -688,6 +711,8 @@ static Job *StartJob(void *sm, void *dialog, const char *resource) {
 
 /* ---------- hooked coroutine ---------- */
 static int HookedMoveNext(void *sm, void *methodInfo) {
+    static int loggedEntry = 0;
+    if (!loggedEntry) { StatusLog("MoveNext hook entered"); loggedEntry = 1; }
     if (!gEnabled && gOriginalMoveNext) return gOriginalMoveNext(sm, methodInfo);
     if (!sm) return 0;
 
@@ -737,9 +762,11 @@ static int InstallForImage(const struct mach_header *mh, const char *imagePath) 
     if (!name || strcmp(name, MODULE_NAME) != 0) return 0;
 
     if (!SetupSession()) {
+        StatusLog("NSURLSession setup failed");
         printf("[-] NodeVideoGitHubDownloader: NSURLSession setup failed\n");
         return 0;
     }
+    StatusLog("NSURLSession setup ok");
 
     uintptr_t base = (uintptr_t)mh;
     void *moveNext = (void *)(base + RVA_MOVE_NEXT);
@@ -750,27 +777,31 @@ static int InstallForImage(const struct mach_header *mh, const char *imagePath) 
     /* JS uses Module.findGlobalExportByName(): RTLD_DEFAULT is the native equivalent. */
     gIl2CppStringNew = (Il2CppStringNewFn)dlsym(RTLD_DEFAULT, "il2cpp_string_new");
     gMSHookFunction = (MSHookFunctionFn)dlsym(RTLD_DEFAULT, "MSHookFunction");
-    gDobbyHook = (DobbyHookFn)dlsym(RTLD_DEFAULT, "DobbyHook");
 
-    if (gMSHookFunction) {
-        gMSHookFunction(moveNext, (void *)HookedMoveNext, (void **)&gOriginalMoveNext);
-    } else if (gDobbyHook) {
-        int rc = gDobbyHook(moveNext, (void *)HookedMoveNext, (void **)&gOriginalMoveNext);
-        if (rc != 0) {
-            printf("[-] NodeVideoGitHubDownloader: DobbyHook failed rc=%d\n", rc);
-            return 0;
-        }
-    } else {
-        printf("[-] NodeVideoGitHubDownloader: no MSHookFunction/DobbyHook backend\n");
+    /* v2: Dobby is linked statically into this dylib, so hook installation no longer
+       depends on the injector exporting MSHookFunction/DobbyHook. */
+    gDobbyHook = DobbyHook;
+    gHookTarget = moveNext;
+    gUsingEmbeddedDobby = 1;
+    StatusLog("UnityFramework detected; installing embedded Dobby hook");
+
+    int rc = gDobbyHook(moveNext, (void *)HookedMoveNext, (void **)&gOriginalMoveNext);
+    if (rc != 0) {
+        char msg[128];
+        snprintf(msg, sizeof(msg), "embedded DobbyHook failed rc=%d", rc);
+        StatusLog(msg);
+        printf("[-] NodeVideoGitHubDownloader: embedded DobbyHook failed rc=%d\n", rc);
         return 0;
     }
 
     if (!gOriginalMoveNext) {
+        StatusLog("embedded DobbyHook returned no trampoline");
         printf("[-] NodeVideoGitHubDownloader: hook backend returned no trampoline\n");
         return 0;
     }
 
     gHookInstalled = 1;
+    StatusLog("hook installed successfully");
 
     printf("[+] NodeVideoGitHubDownloader installed: base=%p MoveNext=%p\n", (void *)base, moveNext);
     printf("[+] il2cpp_string_new=%p\n", (void *)gIl2CppStringNew);
@@ -828,6 +859,25 @@ int NVGitHubDownloaderIsInstalled(void) {
 }
 
 __attribute__((visibility("default")))
+int NVGitHubDownloaderUninstall(void) {
+    if (!gHookInstalled || !gUsingEmbeddedDobby || !gHookTarget || gJobs) return 0;
+    int rc = DobbyDestroy(gHookTarget);
+    if (rc == 0) {
+        gHookInstalled = 0;
+        gHookTarget = NULLPTR;
+        gOriginalMoveNext = NULLPTR;
+        StatusLog("hook uninstalled");
+        return 1;
+    }
+    return 0;
+}
+
+__attribute__((visibility("default")))
+const char *NVGitHubDownloaderStatusLogPath(void) {
+    return gStatusLogPath;
+}
+
+__attribute__((visibility("default")))
 const char *NVGitHubDownloaderBuildInfo(void) {
-    return "2.js native port; UnityFramework RVAs 2E13604/2E12C94/5B39F30/5B3A674";
+    return "v2 embedded-Dobby; UnityFramework RVAs 2E13604/2E12C94/5B39F30/5B3A674";
 }
