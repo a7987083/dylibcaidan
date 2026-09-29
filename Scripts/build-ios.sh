@@ -15,12 +15,12 @@ xcrun --sdk iphoneos clang \
   -Wl,-install_name,@rpath/NodeVideoGitHubDownloader.dylib \
   -framework Foundation \
   -lobjc \
-  "$ROOT/Sources/NodeVideoGitHubDownloader.c" \
-  -o "$OUT/DylibCaidan.dylib"
+  "$ROOT/Sources/NodeVideoGitHubDownloader.m" \
+  -o "$OUT/NodeVideoGitHubDownloader.dylib"
 
-codesign --force --sign - "$OUT/DylibCaidan.dylib"
-file "$OUT/DylibCaidan.dylib"
-otool -hv "$OUT/DylibCaidan.dylib"
-otool -L "$OUT/DylibCaidan.dylib"
-nm -gU "$OUT/DylibCaidan.dylib" | grep 'NVGitHubDownloader'
-shasum -a 256 "$OUT/DylibCaidan.dylib" | tee "$OUT/SHA256.txt"
+codesign --force --sign - "$OUT/NodeVideoGitHubDownloader.dylib"
+file "$OUT/NodeVideoGitHubDownloader.dylib"
+otool -hv "$OUT/NodeVideoGitHubDownloader.dylib"
+otool -L "$OUT/NodeVideoGitHubDownloader.dylib"
+nm -gU "$OUT/NodeVideoGitHubDownloader.dylib" | grep 'NVGitHubDownloader'
+shasum -a 256 "$OUT/NodeVideoGitHubDownloader.dylib" | tee "$OUT/SHA256.txt"

@@ -18,11 +18,11 @@ jobs:
           Scripts/build-ios.sh
       - name: Inspect Mach-O
         run: |
-          file build/DylibCaidan.dylib
-          otool -hv build/DylibCaidan.dylib
-          otool -L build/DylibCaidan.dylib
+          file build/NodeVideoGitHubDownloader.dylib
+          otool -hv build/NodeVideoGitHubDownloader.dylib
+          otool -L build/NodeVideoGitHubDownloader.dylib
       - name: Upload dylib
         uses: actions/upload-artifact@v4
         with:
-          name: DylibCaidan-arm64
-          path: build/DylibCaidan.dylib
+          name: NodeVideoGitHubDownloader-ObjC-arm64
+          path: build/NodeVideoGitHubDownloader.dylib

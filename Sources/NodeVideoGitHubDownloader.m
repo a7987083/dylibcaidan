@@ -1,6 +1,6 @@
 /*
- * NodeVideoGitHubDownloader.c
- * Native dylib port of the supplied 2.js.
+ * NodeVideoGitHubDownloader.m
+ * Objective-C native dylib port of the supplied JS downloader.
  *
  * Target contract copied from 2.js:
  *   UnityFramework
@@ -14,20 +14,14 @@
  * through the Objective-C runtime already present in an iOS app process.
  */
 
-/* ---------- minimal Darwin / Objective-C declarations ---------- */
+/* ---------- Objective-C / Darwin declarations ---------- */
+#import <Foundation/Foundation.h>
+#import <objc/runtime.h>
+#import <objc/message.h>
+#include <stdint.h>
+
 typedef unsigned long usize_t;
 typedef long isize_t;
-typedef long intptr_t;
-typedef unsigned long uintptr_t;
-typedef long long int64_t;
-typedef int int32_t;
-typedef unsigned short uint16_t;
-typedef unsigned int uint32_t;
-
-typedef void *id;
-typedef void *Class;
-typedef void *SEL;
-typedef void *Protocol;
 typedef signed char ObjCBool;
 
 struct mach_header;
@@ -38,15 +32,6 @@ typedef struct {
     const char *dli_sname;
     void *dli_saddr;
 } Dl_info;
-
-extern Class objc_getClass(const char *name);
-extern SEL sel_registerName(const char *name);
-extern void objc_msgSend(void);
-extern Class objc_allocateClassPair(Class superclass, const char *name, usize_t extraBytes);
-extern void objc_registerClassPair(Class cls);
-extern ObjCBool class_addMethod(Class cls, SEL name, void *imp, const char *types);
-extern ObjCBool class_addProtocol(Class cls, Protocol *protocol);
-extern Protocol *objc_getProtocol(const char *name);
 
 extern void _dyld_register_func_for_add_image(void (*func)(const struct mach_header *, intptr_t));
 extern int dladdr(const void *addr, Dl_info *info);
@@ -831,3 +816,23 @@ __attribute__((visibility("default")))
 const char *NVGitHubDownloaderBuildInfo(void) {
     return "2.js native port; UnityFramework RVAs 2E13604/2E12C94/5B39F30/5B3A674";
 }
+
+/* ---------- Objective-C bridge ---------- */
+@interface NVGitHubDownloaderBridge : NSObject
++ (void)setEnabled:(BOOL)enabled;
++ (BOOL)isInstalled;
++ (NSString *)buildInfo;
+@end
+
+@implementation NVGitHubDownloaderBridge
++ (void)setEnabled:(BOOL)enabled {
+    NVGitHubDownloaderSetEnabled(enabled ? 1 : 0);
+}
++ (BOOL)isInstalled {
+    return NVGitHubDownloaderIsInstalled() ? YES : NO;
+}
++ (NSString *)buildInfo {
+    const char *s = NVGitHubDownloaderBuildInfo();
+    return s ? [NSString stringWithUTF8String:s] : @"";
+}
+@end
